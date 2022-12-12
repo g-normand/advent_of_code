@@ -16,7 +16,9 @@ def get_cur_dir(cur_line, splitting):
 
 cur_dir_ls = ''
 infos = dict()
-infos['least_than_100000'] = 0
+
+TOTAL = 70000000
+LEAST = 30000000
 
 
 for line in f.readlines():
@@ -51,8 +53,6 @@ def insert_data(list_of_dir, infos, _file, root):
            size += insert_data(list_of_dir, infos, subfile, root=new_root)
         _file['size'] = size
         list_of_dir.append(dict(name=new_root, size=size))
-        if size < 100000:
-            infos['least_than_100000'] += size
            
     return size
 
@@ -61,5 +61,11 @@ list_of_dir = []
 size_root = 0
 for _file in infos['/']:
     size_root += insert_data(list_of_dir, infos, _file, root='/')
-    
-print('TOTAL', infos['least_than_100000'])
+
+print('TOTAL', size_root)
+print('CURRENTLY', TOTAL - size_root)
+
+for _dir in sorted(list_of_dir, key=lambda x:x['size']):
+    if TOTAL - size_root + _dir['size'] > LEAST:
+        print('OK', _dir['size'])
+        break
