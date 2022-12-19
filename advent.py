@@ -1,71 +1,70 @@
 import sys
  
 n = len(sys.argv)
-TEST = True
 filename = "example"
 if n > 1:
-    TEST = False
     filename = "input"
 
 f = open(filename, "r")
 
-
-def get_cur_dir(cur_line, splitting):
-    return cur_line.split(splitting)[1][:-1]
-
-
-cur_dir_ls = ''
-infos = dict()
-
-TOTAL = 70000000
-LEAST = 30000000
-
-
+table = dict()
+width = 0
+height = 0
 for line in f.readlines():
-    if line.startswith('$ cd'):
-        new_dir = get_cur_dir(line, 'cd ')
-        if new_dir == '/':
-            cur_dir_ls = '/'
-        elif new_dir == '..':
-            cur_dir_ls = '/'.join(cur_dir_ls.split('/')[:-2]) + '/'
-        else:
-            cur_dir_ls = cur_dir_ls + new_dir + '/'
-        if cur_dir_ls not in infos:
-            infos[cur_dir_ls] = []
-    elif line.startswith('$ ls'):
-        # LS
-        pass
-    elif line.startswith('dir'):
-        dir_name = get_cur_dir(line, 'dir ')
-        cur_dir = cur_dir_ls + dir_name
-        infos[cur_dir_ls].append(dict(type='dir', filename=dir_name, size=0))
-    else:
-        size, filename = line.split(' ')
-        infos[cur_dir_ls].append(dict(type='file', size=int(size), filename=filename[:-1]))
-       
-
-def insert_data(list_of_dir, infos, _file, root):
-    size = _file['size']
-    if _file['type'] == 'dir':
-        new_root = root + _file['filename'] + '/'
-        _file['data'] = infos[new_root]
-        for subfile in infos[new_root]:
-           size += insert_data(list_of_dir, infos, subfile, root=new_root)
-        _file['size'] = size
-        list_of_dir.append(dict(name=new_root, size=size))
-           
-    return size
+    trees = line.split('\n')[0]
+    table[height] = trees
+    height += 1
+    width = max(width, len(trees))
 
 
-list_of_dir = []
-size_root = 0
-for _file in infos['/']:
-    size_root += insert_data(list_of_dir, infos, _file, root='/')
+nb_visible_trees = 2 * width + 2 * height - 4
 
-print('TOTAL', size_root)
-print('CURRENTLY', TOTAL - size_root)
 
-for _dir in sorted(list_of_dir, key=lambda x:x['size']):
-    if TOTAL - size_root + _dir['size'] > LEAST:
-        print('OK', _dir['size'])
-        break
+def is_visible(table, line, order):
+    current_tree = int(table[line][order])
+
+    get_max_left = 0
+    for x in range(0, order):
+        get_max_left = max(get_max_left, int(table[line][x]))
+
+    if get_max_left < current_tree:
+        # Visible from the left
+        # print('==> LEFT')
+        return True
+
+    get_max_right = 0
+    for x in range(order + 1, width):
+        get_max_right = max(get_max_right, int(table[line][x]))
+
+    if get_max_right < current_tree:
+        # Visible from the right
+        # print('==> RIGHT')
+        return True
+
+    get_max_top = 0
+    for x in range(0, line):
+        get_max_top = max(get_max_top, int(table[x][order]))
+
+    if get_max_top < current_tree:
+        # Visible from the top
+        # print('==> TOP')
+        return True
+
+    get_max_bottom = 0
+    for x in range(line + 1, height):
+        get_max_bottom = max(get_max_bottom, int(table[x][order]))
+
+    if get_max_bottom < current_tree:
+        # Visible from the bottom
+        # print('==> BOTTOM')
+        return True
+
+    return False
+
+
+for line in range(1, width - 1):
+    for order in range(1, height - 1):
+        if is_visible(table, line, order):
+            nb_visible_trees += 1
+
+print('NB_VISIBLE_TREES', nb_visible_trees)
