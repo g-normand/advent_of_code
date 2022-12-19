@@ -16,55 +16,63 @@ for line in f.readlines():
     height += 1
     width = max(width, len(trees))
 
+max_scenic_score = 0
 
-nb_visible_trees = 2 * width + 2 * height - 4
+
+def scenic_score_left(table, line, order, current_tree):
+    left = 1
+    for x in range(0, order):
+        if int(table[line][order - 1 - x]) < current_tree:
+            left += 1
+        else:
+            return left
+    return left - 1
 
 
-def is_visible(table, line, order):
+def scenic_score_right(table, line, order, current_tree):
+    right = 1
+    for x in range(order + 1, width):
+        if int(table[line][x]) < current_tree:
+            right += 1
+        else:
+            return right
+    return right - 1
+
+
+def scenic_score_top(table, line, order, current_tree):
+    top = 1
+    for x in range(0, line):
+        if int(table[line - 1 - x][order]) < current_tree:
+            top += 1
+        else:
+            return top
+    return top - 1
+
+
+def scenic_score_bottom(table, line, order, current_tree):
+    bottom = 1
+    for x in range(line + 1, height):
+        if int(table[x][order]) < current_tree:
+            bottom += 1
+        else:
+            return bottom
+    return bottom - 1
+
+
+def scenic_score(table, line, order):
     current_tree = int(table[line][order])
 
-    get_max_left = 0
-    for x in range(0, order):
-        get_max_left = max(get_max_left, int(table[line][x]))
+    left = scenic_score_left(table, line, order, current_tree)
+    right = scenic_score_right(table, line, order, current_tree)
+    top = scenic_score_top(table, line, order, current_tree)
+    bottom = scenic_score_bottom(table, line, order, current_tree)
 
-    if get_max_left < current_tree:
-        # Visible from the left
-        # print('==> LEFT')
-        return True
-
-    get_max_right = 0
-    for x in range(order + 1, width):
-        get_max_right = max(get_max_right, int(table[line][x]))
-
-    if get_max_right < current_tree:
-        # Visible from the right
-        # print('==> RIGHT')
-        return True
-
-    get_max_top = 0
-    for x in range(0, line):
-        get_max_top = max(get_max_top, int(table[x][order]))
-
-    if get_max_top < current_tree:
-        # Visible from the top
-        # print('==> TOP')
-        return True
-
-    get_max_bottom = 0
-    for x in range(line + 1, height):
-        get_max_bottom = max(get_max_bottom, int(table[x][order]))
-
-    if get_max_bottom < current_tree:
-        # Visible from the bottom
-        # print('==> BOTTOM')
-        return True
-
-    return False
+    score = left * right * top * bottom
+    return score
 
 
 for line in range(1, width - 1):
     for order in range(1, height - 1):
-        if is_visible(table, line, order):
-            nb_visible_trees += 1
+        max_scenic_score = max(max_scenic_score, scenic_score(table, line, order))
 
-print('NB_VISIBLE_TREES', nb_visible_trees)
+print('MAX SCENIC SCORE', max_scenic_score)
